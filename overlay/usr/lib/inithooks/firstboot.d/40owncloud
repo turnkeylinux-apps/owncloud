@@ -4,5 +4,25 @@
 . /etc/default/inithooks
 
 [ -e $INITHOOKS_CONF ] && . $INITHOOKS_CONF
+
+config="/var/www/owncloud/config/config.php"
+
+trusted_domains="//  Trusted Domains\n"
+
+if [[ $APP_FQDN ]]; then
+	trusted_domains+="    $((n++)) => '$APP_FQDN',\n"
+	trusted_domains+="    $((n++)) => '${APP_FQDN%%.*}',\n"
+fi
+
+trusted_domains+="    $((n++)) => '$(hostname)',\n"
+
+[[ $APP_IP ]] && trusted_domains+="    $((n++)) => '$APP_IP',\n"
+
+trusted_domains+="    $((n++)) => 'localhost',\n"
+trusted_domains+="    $((n++)) => '127.0.0.1'"
+
+sed -i "/127.0.0.1/c \
+$trusted_domains" $config
+
 $INITHOOKS_PATH/bin/owncloud.py --pass="$APP_PASS"
 
