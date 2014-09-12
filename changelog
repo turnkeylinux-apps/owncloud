@@ -1,3 +1,13 @@
+turnkey-owncloud-13.1 (1) turnkey; urgency=low
+
+  * ownCloud:
+
+    - Dynamically added trusted domains to config.php on firstboot.
+    - Upgraded to the latest version, currently 7.x.
+    - Revised readme.rst to emphasize this is ownCloud Community Edition.
+
+ -- John Carver <dude4linux@gmail.com>  Fri, Sep 12 2014 21:05:35 +0000
+
 turnkey-owncloud-13.0 (1) turnkey; urgency=low
 
   * ownCloud:
