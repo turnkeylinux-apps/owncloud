@@ -34,6 +34,10 @@ curl $REPO/Release.key | apt-key add -
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get --force-yes --assume-yes install owncloud
 
+# patch owncloud document download.php - This patch may be removed after the next update of owncloud
+# add namespace to constant #347 - https://github.com/owncloud/documents/pull/347
+sed -i 's/!==Filter_Office/ !== \\OCA\\Documents\\Filter\\Office/' /var/www/owncloud/apps/documents/ajax/download.php
+
 # tweak footer
 TEMPLATE=$WEBROOT/core/templates/layout.guest.php
 sed -i "s|<footer>.*|<footer><p class='info' style='width: auto \!important;'><a href='http://www.turnkeylinux.org/owncloud'>ownCloud Appliance</a> \&ndash; Powered by <a href='http://www.turnkeylinux.org'>TurnKey Linux</a></p></footer>|" $TEMPLATE
