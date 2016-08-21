@@ -9,9 +9,9 @@ wherever you are, when you need it.
 This appliance includes all the standard features in `TurnKey Core`_,
 and on top of that:
 
-- ownCloud Community Edition:
+- ownCloud Server:
    
-   - Installed from Debian repository
+   - Installed from official zip file. No automatic updates.
 
 - SSL support out of the box.
 - `Adminer`_ administration frontend for MySQL (listening on port

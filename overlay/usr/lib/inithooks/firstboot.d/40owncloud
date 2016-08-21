@@ -5,4 +5,3 @@
 
 [ -e $INITHOOKS_CONF ] && . $INITHOOKS_CONF
 $INITHOOKS_PATH/bin/owncloud.py --pass="$APP_PASS" --domain="$APP_DOMAIN"
-
