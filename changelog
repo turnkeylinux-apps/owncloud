@@ -1,15 +1,15 @@
-turnkey-owncloud-14.1 (1) turnkey; urgency=low
+turnkey-owncloud-14.2 (1) turnkey; urgency=low
 
   * ownCloud:
 
-    - Modified for ownCloud 9. Downloading from website, no Debian packages
+    - Modified for ownCloud 10. Downloaded from website, no Debian package(s)
 
     - Using command-line tool to set up installation
 
   * Note: Please refer to turnkey-core's changelog for changes common to all
     appliances. Here we only describe changes specific to this appliance.
 
- -- Tomas Vondra <wondra@volny.cz>  Wed, 13 Jan 2016 20:55:31 -0700
+ -- Tomas Vondra <wondra@volny.cz>  Wed, 19 Jul 2017 20:55:31 -0700
 
 turnkey-owncloud-14.1 (1) turnkey; urgency=low
 
