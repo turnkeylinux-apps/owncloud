@@ -71,7 +71,7 @@ def main():
     call(['sed', '-i', sedcom % domain, '/usr/share/owncloud/config/config.php'])
 
     chdir("/usr/share/owncloud")
-    call(['sudo', '-Eu', 'www-data', 'php', 'occ', 'user:resetpassword', '--password-from-env', 'admin'],env={"OC_PASS":password})
+    call(['su', 'www-data', '-s', '/bin/bash', '-c', 'php occ user:resetpassword --password-from-env admin'],env={"OC_PASS":password})
 
 if __name__ == "__main__":
     main()
