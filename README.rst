@@ -11,7 +11,11 @@ and on top of that:
 
 - ownCloud Server:
    
-   - Installed from official zip file. No automatic updates.
+   - Installed from official zip file to /var/www/owncloud
+
+     **Security note**: Updates to ownCloud may require supervision so
+     they **ARE NOT** configured to install automatically. See `ownCloud
+     documentation`_ for upgrading.
 
 - SSL support out of the box.
 - `Adminer`_ administration frontend for MySQL (listening on port
@@ -28,6 +32,7 @@ Credentials *(passwords set at first boot)*
 -  ownCloud: username **admin**
 
 
-.. _ownCloud: http://owncloud.org/
+.. _ownCloud: https://owncloud.org/
 .. _TurnKey Core: https://www.turnkeylinux.org/core
-.. _Adminer: http://www.adminer.org
+.. _ownCloud documentation: https://doc.owncloud.org/server/10.0/admin_manual/maintenance/upgrade.html
+.. _Adminer: https://www.adminer.org
