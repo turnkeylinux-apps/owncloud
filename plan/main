@@ -13,6 +13,10 @@ php7.2-mbstring
 php-pear
 php7.2-xml
 
+redis-server
+php-igbinary
+php-redis
+
 smbclient
 php7.2-ldap
 php7.2-imap
