@@ -45,6 +45,9 @@ php occ maintenance:install --database "mysql" \
 --database-name "$DB_NAME"  --database-user "$DB_USER" --database-pass "$DB_PASS" \
 --admin-user "$ADMIN_NAME" --admin-pass "$ADMIN_PASS"
 
+# enable notify owncloud that we are using cron
+$MYSQL_BATCH --database=$DB_NAME --execute "INSERT INTO oc_appconfig (appid, configkey, configvalue) VALUES ('core', 'backgroundjobs_mode', 'cron');"
+
 # adjust owncloud config for redis
 sed -i '/^);/d' /usr/share/owncloud/config/config.php
 cat <<EOF >> /usr/share/owncloud/config/config.php
