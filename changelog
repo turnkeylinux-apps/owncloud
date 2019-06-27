@@ -1,8 +1,7 @@
 turnkey-owncloud-15.2 (1) turnkey; urgency=low
 
-  * Auto-detect latest upstream version
-
-  * Updated to latest upstream version
+  * Auto-detect latest upstream version (temporarily disabled - additional
+    config required).
 
   * Update to PHP 7.2
 
