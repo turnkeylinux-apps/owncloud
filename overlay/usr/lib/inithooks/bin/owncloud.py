@@ -16,15 +16,15 @@ from os import chdir
 
 from dialog_wrapper import Dialog
 
+DEFAULT_DOMAIN = "www.example.com"
+
+
 def usage(s=None):
     if s:
         print("Error:", s, file=sys.stderr)
     print("Syntax: %s [options]" % sys.argv[0], file=sys.stderr)
     print(__doc__, file=sys.stderr)
     sys.exit(1)
-
-DEFAULT_DOMAIN="www.example.com"
-
 
 
 def main():
@@ -67,12 +67,14 @@ def main():
     1 => '%s',
     """
 
-    call(['sed', '-i', "/1 => /d", '/usr/share/owncloud/config/config.php'])
-    call(['sed', '-i', sedcom % domain, '/usr/share/owncloud/config/config.php'])
+    conf = '/var/www/owncloud/config/config.php'
+    call(['sed', '-i', "/1 => /d", conf])
+    call(['sed', '-i', sedcom % domain, conf])
 
-    chdir("/usr/share/owncloud")
-    call(['su', 'www-data', '-s', '/bin/bash', '-c', 'php occ user:resetpassword --password-from-env admin'],env={"OC_PASS":password})
+    call(['turnkey-occ', 'user:resetpassword', '--password-from-env admin'],
+         cwd='/var/www/owncloud',
+         env={"OC_PASS": password})
+
 
 if __name__ == "__main__":
     main()
-
