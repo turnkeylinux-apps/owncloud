@@ -1,3 +1,25 @@
+turnkey-owncloud-16.1 (1) turnkey; urgency=low
+
+  * Update owncloud to latest upstream version - 10.6.0.
+
+  * Update owncloud web root to /var/www/owncloud.
+
+  * Include 'turnkey-occ' wrapper script (for occ command). Runs 'php occ' as
+    www-data user.
+
+  * Move owncloud data folder outside webroot - /var/www/owncloud-data -
+    similar to #1436 (but for owncloud).
+
+  * Set default permissions more permissively, so that the webUI updater will
+    work OOTB - similar to  #1182 (but for owncloud).
+
+  * Remove redundant 3rd party sury.org repo - part of #1578.
+
+  * Note: Please refer to turnkey-core's 16.1 changelog for changes common to
+    all appliances. Here we only describe changes specific to this appliance.
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Mon, 29 Mar 2021 14:55:49 +1100
+
 turnkey-owncloud-16.0 (1) turnkey; urgency=low
 
   * Update owncloud to latest stable - 10.4.1.
