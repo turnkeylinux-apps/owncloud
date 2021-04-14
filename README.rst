@@ -12,6 +12,9 @@ and on top of that:
 - ownCloud Server:
    
    - Installed from official zip file to /var/www/owncloud.
+   - Data directory (/var/www/owncloud-data) outside the webroot (security).
+   - Includes occ_ script for command line administration and configuration.
+     Also includes turnkey-occ_ wrapper script (runs occ as www-data user).
 
      **Security note**: Updates to ownCloud may require supervision so
      they **ARE NOT** configured to install automatically. See `ownCloud
@@ -34,5 +37,7 @@ Credentials *(passwords set at first boot)*
 
 .. _ownCloud: https://owncloud.org/
 .. _TurnKey Core: https://www.turnkeylinux.org/core
-.. _ownCloud documentation: https://doc.owncloud.org/server/10.6/admin_manual/maintenance/upgrade.html
+.. _occ: https://doc.owncloud.com/server/admin_manual/configuration/server/occ_command.html
+.. _turnkey-occ: https://github.com/turnkeylinux-apps/owncloud/blob/master/overlay/usr/local/bin/turnkey-occ
+.. _ownCloud documentation: https://doc.owncloud.org/server/admin_manual/maintenance/upgrade.html
 .. _Adminer: https://www.adminer.org
