@@ -2,9 +2,9 @@
 
 [[ -z "$DEBUG" ]] || set -x
 
-NC_USR=${NC_USR:-www-data}
-OCC=/var/www/nextcloud/occ
+OC_USR=${OC_USR:-www-data}
+OCC=/var/www/owncloud/occ
 
 COMMAND="/usr/bin/php $OCC $@"
 
-runuser $WP_USR -s /bin/bash -c "$COMMAND"
+runuser $OC_USR -s /bin/bash -c "$COMMAND"
