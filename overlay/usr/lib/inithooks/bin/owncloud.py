@@ -71,7 +71,7 @@ def main():
     call(['sed', '-i', "/1 => /d", conf])
     call(['sed', '-i', sedcom % domain, conf])
 
-    call(['turnkey-occ', 'user:resetpassword', '--password-from-env admin'],
+    call(['/usr/local/bin/turnkey-occ', 'user:resetpassword', '--password-from-env admin'],
          cwd='/var/www/owncloud',
          env={"OC_PASS": password})
 
