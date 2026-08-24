@@ -132,7 +132,11 @@ if (!$redis->auth(getenv("OWNCLOUD_REDIS_PASSWORD")) || !$redis->ping()) {
 }
 '
 redis_unauthenticated=$(redis-cli --host 172.28.0.1 ping 2>&1 || true)
-grep -Eq 'NOAUTH|Authentication required' <<<"$redis_unauthenticated"
+if [[ "$redis_unauthenticated" == PONG ]]; then
+    echo 'Redis accepted an unauthenticated PING' >&2
+    exit 1
+fi
+echo 'redis_unauthenticated_ping=denied'
 
 curl --insecure --fail --silent --show-error \
     https://127.0.0.1:12322/ >"$response"
