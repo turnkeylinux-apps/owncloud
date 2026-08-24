@@ -72,7 +72,7 @@ grep -Eqi '^location: https://localhost/' "$headers"
 curl --insecure --fail --silent --show-error "$base/status.php" >"$response"
 grep -q '"installed":true' "$response"
 grep -q '"versionstring":"11.0.0"' "$response"
-curl --insecure --fail --silent --show-error "$base/" >"$response"
+curl --insecure --fail --silent --show-error --location "$base/" >"$response"
 grep -qi 'owncloud' "$response"
 
 curl --insecure --fail --silent --show-error --user "admin:$app_password" \
