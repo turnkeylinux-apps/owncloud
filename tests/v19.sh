@@ -122,12 +122,17 @@ if ss -ltn | grep -Eq '(0\.0\.0\.0|\[::\]):(3306|6379|8080)[[:space:]]'; then
 fi
 redis_password=$(sed -n 's/^OWNCLOUD_REDIS_PASSWORD=//p' \
     /etc/owncloud/owncloud.env)
-redis-cli --host 172.28.0.1 --pass "$redis_password" ping 2>/dev/null | \
-    grep -Fx PONG
-if redis-cli --host 172.28.0.1 ping 2>&1 | grep -Fq PONG; then
-    echo 'Redis accepted an unauthenticated request' >&2
-    exit 1
-fi
+grep -Fxq "requirepass $redis_password" /etc/redis/redis.conf
+docker exec owncloud_server php -r '
+$redis = new Redis();
+$redis->connect(getenv("OWNCLOUD_REDIS_HOST"),
+                (int) getenv("OWNCLOUD_REDIS_PORT"));
+if (!$redis->auth(getenv("OWNCLOUD_REDIS_PASSWORD")) || !$redis->ping()) {
+    exit(1);
+}
+'
+redis_unauthenticated=$(redis-cli --host 172.28.0.1 ping 2>&1 || true)
+grep -Eq 'NOAUTH|Authentication required' <<<"$redis_unauthenticated"
 
 curl --insecure --fail --silent --show-error \
     https://127.0.0.1:12322/ >"$response"
