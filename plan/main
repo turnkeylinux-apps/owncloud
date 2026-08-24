@@ -1,25 +1,6 @@
 #include <turnkey/base>
-#include <turnkey/lamp74>
+#include <turnkey/lamp>
 
-php7.4-gd
-php7.4-cli
-php7.4-curl
-php7.4-json
-php7.4-intl
-php7.4-imagick
-php7.4-zip
-php7.4-mbstring
-php-pear
-php7.4-xml
-
+docker.io
+skopeo
 redis-server
-php7.4-igbinary
-php7.4-redis
-
-smbclient
-php7.4-ldap
-php7.4-imap
-php7.4-gmp
-
-bzip2
-ffmpeg

@@ -1,10 +1,11 @@
-#!/bin/bash -e
+#!/bin/bash
+set -Eeuo pipefail
 
-[[ -z "$DEBUG" ]] || set -x
+[[ -z ${DEBUG:-} ]] || set -x
 
-OC_USR=${OC_USR:-www-data}
-OCC=/var/www/owncloud/occ
+args=(--user "${OC_USR:-www-data}")
+if [[ -n ${OC_PASS:-} ]]; then
+    args+=(--env "OC_PASS=$OC_PASS")
+fi
 
-COMMAND="/usr/bin/php $OCC $@"
-
-runuser $OC_USR -s /bin/bash -c "$COMMAND"
+exec docker exec "${args[@]}" owncloud_server occ "$@"

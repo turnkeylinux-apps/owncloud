@@ -1,0 +1,13 @@
+[Unit]
+Description=Prepare the private ownCloud container network
+Requires=docker.service
+After=docker.service
+Before=mariadb.service redis-server.service owncloud.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/owncloud/network-ready
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

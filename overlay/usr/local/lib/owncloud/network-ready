@@ -1,0 +1,17 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+network=owncloud
+subnet=172.28.0.0/24
+gateway=172.28.0.1
+
+if docker network inspect "$network" >/dev/null 2>&1; then
+    actual_subnet=$(docker network inspect --format \
+        '{{(index .IPAM.Config 0).Subnet}}' "$network")
+    actual_gateway=$(docker network inspect --format \
+        '{{(index .IPAM.Config 0).Gateway}}' "$network")
+    [[ $actual_subnet == "$subnet" && $actual_gateway == "$gateway" ]]
+else
+    docker network create --driver bridge --subnet "$subnet" \
+        --gateway "$gateway" "$network" >/dev/null
+fi

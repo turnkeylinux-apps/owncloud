@@ -1,0 +1,18 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+source /etc/owncloud/image.conf
+
+if ! docker image inspect "$OWNCLOUD_IMAGE" >/dev/null 2>&1; then
+    archive=/usr/local/src/owncloud-server.tar
+    [[ -s $archive ]]
+    docker load --input "$archive" >/dev/null
+    docker image inspect "$OWNCLOUD_IMAGE" >/dev/null
+    truncate --size 0 "$archive"
+fi
+
+exec docker run --rm --name owncloud_server --network owncloud \
+    --publish 127.0.0.1:8080:8080 \
+    --env-file /etc/owncloud/owncloud.env \
+    --volume /var/lib/owncloud:/mnt/data \
+    "$OWNCLOUD_IMAGE"

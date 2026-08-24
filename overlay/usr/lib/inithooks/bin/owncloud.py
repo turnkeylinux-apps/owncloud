@@ -9,10 +9,9 @@ Option:
 
 import sys
 import getopt
+import os
 import subprocess
-from subprocess import call
-from os.path import *
-from os import chdir
+import time
 
 from libinithooks.dialog_wrapper import Dialog
 
@@ -62,18 +61,44 @@ def main():
     if domain == "DEFAULT":
         domain = DEFAULT_DOMAIN
 
-    sedcom = """
-        /0 => 'localhost',/ a\
-    1 => '%s',
-    """
+    occ = '/usr/local/bin/turnkey-occ'
+    for _ in range(150):
+        status = subprocess.run([occ, 'status'], check=False,
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL)
+        if status.returncode == 0:
+            break
+        time.sleep(2)
+    else:
+        raise RuntimeError('ownCloud did not become ready within 300 seconds')
 
-    conf = '/var/www/owncloud/config/config.php'
-    call(['sed', '-i', "/1 => /d", conf])
-    call(['sed', '-i', sedcom % domain, conf])
+    env = os.environ.copy()
+    env['OC_PASS'] = password
+    subprocess.run([occ, 'user:resetpassword', '--password-from-env', 'admin'],
+                   check=True, env=env)
+    subprocess.run([occ, 'config:system:set', 'trusted_domains', '1',
+                    f'--value={domain}'], check=True)
+    subprocess.run([occ, 'config:system:set', 'overwrite.cli.url',
+                    f'--value=https://{domain}'], check=True)
 
-    call(['/usr/local/bin/turnkey-occ', 'user:resetpassword', '--password-from-env admin'],
-         cwd='/var/www/owncloud',
-         env={"OC_PASS": password})
+    env_path = '/etc/owncloud/owncloud.env'
+    with open(env_path, encoding='utf-8') as source:
+        lines = source.readlines()
+    replacements = {
+        'OWNCLOUD_DOMAIN': domain,
+        'OWNCLOUD_TRUSTED_DOMAINS': f'localhost,127.0.0.1,{domain}',
+        'OWNCLOUD_OVERWRITE_CLI_URL': f'https://{domain}',
+    }
+    with open(env_path, 'w', encoding='utf-8') as target:
+        for line in lines:
+            key = line.partition('=')[0]
+            if key == 'OWNCLOUD_ADMIN_PASSWORD':
+                continue
+            if key in replacements:
+                target.write(f'{key}={replacements[key]}\n')
+            else:
+                target.write(line)
+    os.chmod(env_path, 0o600)
 
 
 if __name__ == "__main__":
