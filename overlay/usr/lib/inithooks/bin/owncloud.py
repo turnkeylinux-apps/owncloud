@@ -9,9 +9,11 @@ Option:
 
 import sys
 import getopt
+import json
 import os
 import subprocess
 import time
+import urllib.request
 
 from libinithooks.dialog_wrapper import Dialog
 
@@ -64,9 +66,10 @@ def main():
     occ = '/usr/local/bin/turnkey-occ'
     for _ in range(150):
         status = subprocess.run([occ, 'status'], check=False,
-                                stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL)
-        if status.returncode == 0:
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL,
+                                text=True)
+        if status.returncode == 0 and '- installed: true' in status.stdout:
             break
         time.sleep(2)
     else:
@@ -99,6 +102,22 @@ def main():
             else:
                 target.write(line)
     os.chmod(env_path, 0o600)
+
+    for _ in range(150):
+        try:
+            with urllib.request.urlopen(
+                    'http://127.0.0.1:8080/status.php', timeout=2) as response:
+                status = json.load(response)
+            if status.get('installed') is True:
+                break
+        except (OSError, ValueError):
+            pass
+        time.sleep(2)
+    else:
+        raise RuntimeError('ownCloud HTTP endpoint was not ready within 300 seconds')
+
+    with open('/etc/owncloud/configured', 'w', encoding='utf-8'):
+        pass
 
 
 if __name__ == "__main__":

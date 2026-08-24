@@ -41,6 +41,7 @@ systemctl --quiet is-enabled docker.service owncloud-network.service \
 apache2ctl -t
 apache2ctl -M 2>/dev/null | grep -F ' proxy_module ' >/dev/null
 apache2ctl -M 2>/dev/null | grep -F ' proxy_http_module ' >/dev/null
+test -e /etc/owncloud/configured
 
 owncloud_version=$(turnkey-occ status | awk '/versionstring:/ {print $3}')
 test "$owncloud_version" = 11.0.0
