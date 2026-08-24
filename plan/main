@@ -2,5 +2,6 @@
 #include <turnkey/lamp>
 
 docker.io
+docker-cli
 skopeo
 redis-server

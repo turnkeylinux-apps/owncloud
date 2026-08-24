@@ -153,26 +153,27 @@ apache_version=$(dpkg-query -W -f='${Version}' apache2)
 mariadb_version=$(dpkg-query -W -f='${Version}' mariadb-server)
 redis_version=$(dpkg-query -W -f='${Version}' redis-server)
 docker_version=$(dpkg-query -W -f='${Version}' docker.io)
+docker_cli_version=$(dpkg-query -W -f='${Version}' docker-cli)
 skopeo_version=$(dpkg-query -W -f='${Version}' skopeo)
-before="$apache_version|$mariadb_version|$redis_version|$docker_version|$skopeo_version"
+before="$apache_version|$mariadb_version|$redis_version|$docker_version|$docker_cli_version|$skopeo_version"
 apt-get update >/dev/null
-for package in apache2 mariadb-server redis-server docker.io skopeo; do
+for package in apache2 mariadb-server redis-server docker.io docker-cli skopeo; do
     apt-cache policy "$package" >"$policy"
     candidate=$(awk '/Candidate:/ {print $2}' "$policy")
     test -n "$candidate"
     test "$candidate" != '(none)'
     grep -Eq 'trixie|deb13' "$policy"
 done
-after="$(dpkg-query -W -f='${Version}' apache2)|$(dpkg-query -W -f='${Version}' mariadb-server)|$(dpkg-query -W -f='${Version}' redis-server)|$(dpkg-query -W -f='${Version}' docker.io)|$(dpkg-query -W -f='${Version}' skopeo)"
+after="$(dpkg-query -W -f='${Version}' apache2)|$(dpkg-query -W -f='${Version}' mariadb-server)|$(dpkg-query -W -f='${Version}' redis-server)|$(dpkg-query -W -f='${Version}' docker.io)|$(dpkg-query -W -f='${Version}' docker-cli)|$(dpkg-query -W -f='${Version}' skopeo)"
 test "$after" = "$before"
 grep -Rqs '^Suites: trixie' /etc/apt/sources.list.d
 ! grep -Rqi bookworm /etc/apt/sources.list.d
 
 cat >"$result" <<EOF
-package_source=Debian 13 Trixie APT repositories for Docker, Skopeo, Apache, MariaDB, Redis and Adminer; official ownCloud Server image from Docker Hub
-installed_version=ownCloud $owncloud_version; apache2 $apache_version; mariadb-server $mariadb_version; redis-server $redis_version; docker.io $docker_version; skopeo $skopeo_version
+package_source=Debian 13 Trixie APT repositories for Docker Engine and client, Skopeo, Apache, MariaDB, Redis and Adminer; official ownCloud Server image from Docker Hub
+installed_version=ownCloud $owncloud_version; apache2 $apache_version; mariadb-server $mariadb_version; redis-server $redis_version; docker.io $docker_version; docker-cli $docker_cli_version; skopeo $skopeo_version
 runtime_checks=normal init; private Docker network; official ownCloud container behind Apache HTTPS; firstboot administrator authentication; WebDAV file create, read, update and delete with MariaDB readback; turnkey-occ user create and delete; authenticated Redis; Adminer login
-updater_command=owncloud-update --check 11.0.0; apt-get update and apt-cache policy apache2 mariadb-server redis-server docker.io skopeo
+updater_command=owncloud-update --check 11.0.0; apt-get update and apt-cache policy apache2 mariadb-server redis-server docker.io docker-cli skopeo
 updater_result=official amd64 ownCloud image candidate and digest resolved without changing the running image; signed Trixie metadata refreshed with eligible candidates and installed versions unchanged
 updater_channel=reviewed official ownCloud Server version tags on Docker Hub; Debian and TurnKey Trixie APT repositories
 integrity_evidence=build source pins ownCloud amd64 manifest sha256:dbebc24fe77a35c5de621d38a3f7264ffb43e3ee321928cde9a563a72b8ff366; Skopeo verifies registry manifests and blobs; APT accepted signed metadata; no Bookworm source remained

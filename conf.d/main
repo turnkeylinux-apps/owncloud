@@ -63,4 +63,9 @@ sed -i "s/^# requirepass .*/requirepass $REDIS_PASS/" /etc/redis/redis.conf
 service mysql stop
 service apache2 stop
 
-systemctl enable docker.service owncloud-network.service owncloud.service
+systemctl enable docker.service
+install -d /etc/systemd/system/multi-user.target.wants
+ln -s ../owncloud-network.service \
+    /etc/systemd/system/multi-user.target.wants/owncloud-network.service
+ln -s ../owncloud.service \
+    /etc/systemd/system/multi-user.target.wants/owncloud.service
