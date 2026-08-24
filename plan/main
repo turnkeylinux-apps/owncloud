@@ -3,5 +3,6 @@
 
 docker.io
 docker-cli
+fuse-overlayfs
 skopeo
 redis-server
