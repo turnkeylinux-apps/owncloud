@@ -131,11 +131,15 @@ if (!$redis->auth(getenv("OWNCLOUD_REDIS_PASSWORD")) || !$redis->ping()) {
     exit(1);
 }
 '
-redis_unauthenticated=$(redis-cli --host 172.28.0.1 ping 2>&1 || true)
-if [[ "$redis_unauthenticated" == PONG ]]; then
-    echo 'Redis accepted an unauthenticated PING' >&2
-    exit 1
-fi
+python3 - <<'PY'
+import socket
+
+with socket.create_connection(('172.28.0.1', 6379), timeout=5) as redis:
+    redis.sendall(b'*1\r\n$4\r\nPING\r\n')
+    response = redis.recv(256)
+if not response.startswith(b'-NOAUTH '):
+    raise SystemExit('Redis did not reject unauthenticated PING: %r' % response)
+PY
 echo 'redis_unauthenticated_ping=denied'
 
 curl --insecure --fail --silent --show-error \
