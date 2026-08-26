@@ -34,10 +34,10 @@ trap cleanup EXIT
 
 systemctl --quiet is-active docker.service owncloud-network.service \
     owncloud.service apache2.service mariadb.service redis-server.service \
-    postfix.service multi-user.target
+    cron.service postfix.service multi-user.target
 systemctl --quiet is-enabled docker.service owncloud-network.service \
     owncloud.service apache2.service mariadb.service redis-server.service \
-    postfix.service
+    cron.service postfix.service
 apache2ctl -t
 apache2ctl -M 2>/dev/null | grep -F ' proxy_module ' >/dev/null
 apache2ctl -M 2>/dev/null | grep -F ' proxy_http_module ' >/dev/null
@@ -56,6 +56,8 @@ test "$OWNCLOUD_DIGEST" = \
 test "$(docker inspect --format '{{.Config.Image}}' owncloud_server)" = \
     "$OWNCLOUD_IMAGE"
 test "$(docker inspect --format '{{.State.Running}}' owncloud_server)" = true
+test "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/mnt/data"}}{{.Source}}{{end}}{{end}}' owncloud_server)" = \
+    /var/lib/owncloud
 test "$(docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}' owncloud_server)" = owncloud
 test "$(docker network inspect --format '{{(index .IPAM.Config 0).Subnet}}' owncloud)" = 172.28.0.0/24
 test "$(docker network inspect --format '{{(index .IPAM.Config 0).Gateway}}' owncloud)" = 172.28.0.1
@@ -112,6 +114,12 @@ mariadb --batch --skip-column-names owncloud \
     --execute="SELECT uid FROM oc_users WHERE uid='$test_user';" | \
     grep -Fx "$test_user"
 turnkey-occ user:delete "$test_user"
+
+grep -Fxq \
+    '*/15 * * * * root /usr/local/bin/turnkey-occ system:cron >/dev/null 2>&1' \
+    /etc/cron.d/owncloud
+test "$(turnkey-occ config:app:get core backgroundjobs_mode)" = cron
+turnkey-occ system:cron >/dev/null
 
 ss -ltn | grep -Eq '127\.0\.0\.1:8080[[:space:]]'
 ss -ltn | grep -Eq '172\.28\.0\.1:3306[[:space:]]'
@@ -192,7 +200,7 @@ grep -Rqs '^Suites: trixie' /etc/apt/sources.list.d
 cat >"$result" <<EOF
 package_source=Debian 13 Trixie APT repositories for Docker Engine and client, fuse-overlayfs, Skopeo, Apache, MariaDB, Redis and Adminer; official ownCloud Server image from Docker Hub
 installed_version=ownCloud $owncloud_version; apache2 $apache_version; mariadb-server $mariadb_version; redis-server $redis_version; docker.io $docker_version; docker-cli $docker_cli_version; fuse-overlayfs $fuse_overlayfs_version; skopeo $skopeo_version
-runtime_checks=normal init; Docker storage driver $docker_storage_driver; private Docker network; official ownCloud container behind Apache HTTPS; firstboot administrator authentication; WebDAV file create, read, update and delete with MariaDB readback; turnkey-occ user create and delete; authenticated Redis; Adminer login
+runtime_checks=normal init; Docker storage driver $docker_storage_driver; private Docker network; persistent ownCloud data mount; official ownCloud container behind Apache HTTPS; firstboot administrator authentication; WebDAV file create, read, update and delete with MariaDB readback; turnkey-occ user create and delete; cron background job; authenticated Redis; Adminer login
 updater_command=owncloud-update --check 11.0.0; apt-get update and apt-cache policy apache2 mariadb-server redis-server docker.io docker-cli fuse-overlayfs skopeo
 updater_result=official amd64 ownCloud image candidate and digest resolved without changing the running image; signed Trixie metadata refreshed with eligible candidates and installed versions unchanged
 updater_channel=reviewed official ownCloud Server version tags on Docker Hub; Debian and TurnKey Trixie APT repositories
