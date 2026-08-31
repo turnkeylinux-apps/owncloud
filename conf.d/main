@@ -1,34 +1,17 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 DB_NAME=owncloud
 DB_USER=owncloud
 DB_PASS=$(mcookie)
-
-ADMIN_NAME=admin
-ADMIN_PASS=turnkey
-
-WEBROOT=/var/www/owncloud
-DATAROOT=${WEBROOT}-data
-CONF=$WEBROOT/config/config.php
-
-# unpack tarball to webroot and set permissions
-unzip /usr/local/src/owncloud*.zip -d $(dirname $WEBROOT)
-[[ ! -d "$WEBROOT" ]] && exit 1
-rm -rf /usr/local/src/owncloud*
-mkdir -p $DATAROOT
-
-# tweak footer
-TEMPLATE=$WEBROOT/core/templates/layout.guest.php
-sed -i "s|.*getLongFooter.*|<a href='https://www.turnkeylinux.org/owncloud'>ownCloud Appliance</a> \&ndash; Powered by <a href='https://www.turnkeylinux.org'>TurnKey Linux</a>|" $TEMPLATE
+REDIS_PASS=$(mcookie)
 
 # configure apache
 a2dissite 000-default
 a2ensite owncloud.conf
 a2enmod rewrite
 a2enmod headers
-a2enmod env
-a2enmod dir
-a2enmod mime
+a2enmod proxy
+a2enmod proxy_http
 
 # start services
 service mysql start
@@ -36,40 +19,53 @@ service apache2 start
 
 # setup the database
 mysqladmin create $DB_NAME
-mysql --batch --execute "grant all privileges on $DB_NAME.* to $DB_USER@localhost identified by '$DB_PASS'; flush privileges;"
+mysql --batch --execute "CREATE USER '$DB_USER'@'172.28.0.%' IDENTIFIED BY '$DB_PASS'; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'172.28.0.%'; FLUSH PRIVILEGES;"
 
-# command-line install
-chown -R www-data:www-data $WEBROOT
-cd $WEBROOT
-php occ maintenance:install --database "mysql" \
-    --database-name "$DB_NAME"  --database-user "$DB_USER" --database-pass "$DB_PASS" \
-    --admin-user "$ADMIN_NAME" --admin-pass "$ADMIN_PASS" \
-    --data-dir "$DATAROOT"
+install -d -m 700 /etc/owncloud
+install -d -m 700 /var/lib/owncloud
+install -m 600 /usr/local/src/owncloud-image-source /etc/owncloud/image-source
 
-# enable notify owncloud that we are using cron
-mysql --batch --database=$DB_NAME --execute "INSERT INTO oc_appconfig (appid, configkey, configvalue) VALUES ('core', 'backgroundjobs_mode', 'cron');"
-
-# adjust owncloud config for redis
-sed -i '/^);/d' $CONF
-cat >> $CONF <<EOF
-  'memcache.local' => '\OC\Memcache\Redis',
-  'redis' => [
-      'host' => '/var/run/redis/redis.sock',
-      'port' => 0,
-  ],
-  'memcache.locking' => '\OC\Memcache\Redis',
-);
+cat > /etc/owncloud/image.conf <<EOF
+OWNCLOUD_IMAGE=owncloud/server:11.0.0-turnkey-dbebc24fe77a
+OWNCLOUD_VERSION=11.0.0
+OWNCLOUD_DIGEST=sha256:dbebc24fe77a35c5de621d38a3f7264ffb43e3ee321928cde9a563a72b8ff366
 EOF
 
-# add www-data user to redis group
-usermod -a -G redis www-data
+cat > /etc/owncloud/owncloud.env <<EOF
+OWNCLOUD_DOMAIN=localhost
+OWNCLOUD_TRUSTED_DOMAINS=localhost,127.0.0.1
+OWNCLOUD_OVERWRITE_CLI_URL=https://localhost
+OWNCLOUD_OVERWRITE_PROTOCOL=https
+OWNCLOUD_DB_TYPE=mysql
+OWNCLOUD_DB_NAME=$DB_NAME
+OWNCLOUD_DB_USERNAME=$DB_USER
+OWNCLOUD_DB_PASSWORD=$DB_PASS
+OWNCLOUD_DB_HOST=172.28.0.1
+OWNCLOUD_MYSQL_UTF8MB4=true
+OWNCLOUD_REDIS_ENABLED=true
+OWNCLOUD_REDIS_HOST=172.28.0.1
+OWNCLOUD_REDIS_PORT=6379
+OWNCLOUD_REDIS_PASSWORD=$REDIS_PASS
+OWNCLOUD_ADMIN_USERNAME=admin
+OWNCLOUD_ADMIN_PASSWORD=turnkey
+EOF
+chmod 600 /etc/owncloud/image.conf /etc/owncloud/owncloud.env
 
-# adjust redis config
-sed -i 's|# unixsocket .*|unixsocket /var/run/redis/redis.sock|g' /etc/redis/redis.conf
-sed -i 's|# unixsocketperm .*|unixsocketperm 770|g' /etc/redis/redis.conf
+cat > /etc/mysql/mariadb.conf.d/60-owncloud.cnf <<'EOF'
+[mariadbd]
+bind-address = 172.28.0.1
+EOF
 
-chown -R www-data:www-data $WEBROOT $DATAROOT
+sed -i 's/^bind .*/bind 172.28.0.1/' /etc/redis/redis.conf
+sed -i "s/^# requirepass .*/requirepass $REDIS_PASS/" /etc/redis/redis.conf
 
 # stop services
 service mysql stop
 service apache2 stop
+
+systemctl enable docker.service
+install -d /etc/systemd/system/multi-user.target.wants
+ln -s ../owncloud-network.service \
+    /etc/systemd/system/multi-user.target.wants/owncloud-network.service
+ln -s ../owncloud.service \
+    /etc/systemd/system/multi-user.target.wants/owncloud.service

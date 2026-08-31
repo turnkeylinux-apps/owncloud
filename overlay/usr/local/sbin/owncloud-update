@@ -1,0 +1,58 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+usage() {
+    echo 'Usage: owncloud-update --check VERSION' >&2
+    echo '       owncloud-update VERSION sha256:DIGEST' >&2
+    exit 1
+}
+
+candidate_digest() {
+    skopeo inspect --raw "docker://docker.io/owncloud/server:$1" | \
+        python3 -c '
+import json
+import sys
+
+manifest = json.load(sys.stdin)
+for item in manifest.get("manifests", []):
+    platform = item.get("platform", {})
+    if platform.get("os") == "linux" and platform.get("architecture") == "amd64":
+        print(item["digest"])
+        break
+else:
+    raise SystemExit("official tag has no linux/amd64 manifest")
+'
+}
+
+if [[ ${1:-} == --check ]]; then
+    [[ $# == 2 ]] || usage
+    digest=$(candidate_digest "$2")
+    printf 'version=%s\ndigest=%s\nsource=docker.io/owncloud/server\n' \
+        "$2" "$digest"
+    exit 0
+fi
+
+[[ $# == 2 ]] || usage
+version=$1
+digest=$2
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+[[ $digest =~ ^sha256:[0-9a-f]{64}$ ]]
+
+current=$(candidate_digest "$version")
+if [[ $current != "$digest" ]]; then
+    echo "official amd64 digest is $current, not $digest" >&2
+    exit 1
+fi
+
+docker pull "owncloud/server@$digest"
+suffix=${digest#sha256:}
+local_tag="owncloud/server:${version}-turnkey-${suffix:0:12}"
+docker tag "owncloud/server@$digest" "$local_tag"
+
+cat > /etc/owncloud/image.conf <<EOF
+OWNCLOUD_IMAGE=$local_tag
+OWNCLOUD_VERSION=$version
+OWNCLOUD_DIGEST=$digest
+EOF
+chmod 600 /etc/owncloud/image.conf
+systemctl restart owncloud.service

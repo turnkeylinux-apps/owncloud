@@ -1,0 +1,14 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+source /etc/default/inithooks
+
+[[ ${RUN_FIRSTBOOT:-true} == false ]] && exit 0
+
+for _ in $(seq 1 150); do
+    [[ -e /etc/owncloud/firstboot-ready ]] && exit 0
+    sleep 2
+done
+
+echo 'ownCloud firstboot credentials were not prepared within 300 seconds' >&2
+exit 1
